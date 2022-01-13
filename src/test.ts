@@ -1,6 +1,5 @@
-console.log('run this')
-
-export const getData = () => {
+export const getData = (): any => {
+    console.log('run this')
     return {
         a: 89
     }
