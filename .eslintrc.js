@@ -4,8 +4,8 @@ module.exports = {
     es2021: true,
   },
   extends: [
-    'plugin:react/recommended',
-    'airbnb',
+    // 'airbnb',
+    'plugin:import/recommended'
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -16,28 +16,24 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: [
-    'react',
     '@typescript-eslint',
   ],
   settings: {
     'import/resolver': {
       node: {
-        extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
+        extensions: ['.js', '.ts', '.json'],
       },
     },
   },
   rules: {
     'no-unused-vars': 'off',
     'import/no-unresolved': 0,
-    'react/jsx-filename-extension': [2, { extensions: ['.js', '.jsx', '.ts', '.tsx'] }],
     'import/extensions': [
       'error',
       'ignorePackages',
       {
         js: 'never',
-        jsx: 'never',
         ts: 'never',
-        tsx: 'never',
         json: 'never',
       },
     ],
