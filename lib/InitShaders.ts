@@ -18,7 +18,7 @@ export const initShaders = (gl: any, vshader: string, fshader: string) => {
   // 自定义属性
   gl.program = program
 
-  return true
+  return program
 }
 
 /**

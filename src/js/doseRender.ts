@@ -1,8 +1,8 @@
-import { initShaders } from '../lib/InitShaders';
-import { getDoseData } from '../utils';
-import { initVertexBuffer, setAttributeFromBuffer } from '../lib/webgl_utils';
+import { initShaders } from '../../lib/InitShaders';
+import { getDoseData } from '../../utils';
+import { initVertexBuffer, setAttributeFromBuffer } from '../../lib/webgl_utils';
 import { Mat4 } from 'cuon-matrix';
-import { drawHelperLine } from '../utils/helper';
+import { drawHelperLine } from '../../utils/helper';
 const v_shader = `
   attribute vec4 a_Position;
   attribute float a_Value;

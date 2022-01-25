@@ -1,4 +1,4 @@
-import { initShaders } from '../lib/InitShaders';
+import { initShaders } from '../../lib/InitShaders';
 
 export const drawTriangle = () => {
 // vertex shader
