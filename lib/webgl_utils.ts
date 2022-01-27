@@ -21,6 +21,12 @@ export const setAttributeFromBuffer = (gl: any, name: any, size = 2, stride = 0,
     gl.enableVertexAttribArray(attribute)
 }
 
+export const setAttrFromBuffer = (gl: any, program: any, name: any, size = 2, stride = 0, offset = 0) => {
+    const attribute: GLint = gl.getAttribLocation(program, name)
+    gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, stride, offset)
+    gl.enableVertexAttribArray(attribute)
+}
+
 // export const draw = (gl: WebGLRenderingContext, size: number) => {
 //     gl.drawArrays(gl.TRIANGLES, 0, size)
 // }

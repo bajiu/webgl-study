@@ -6,15 +6,17 @@
 import {createGl, initVertexBuffer, setAttributeFromBuffer} from "../../lib/webgl_utils";
 import {Camera} from "../../lib/Camera";
 import {initShaders} from "../../lib/InitShaders";
+import {Mat4} from "cuon-matrix";
 
 
 const v_shader = `
     attribute vec4 a_Position;
     attribute vec4 a_Color;
-    uniform mat4 uMat;
+    uniform mat4 u_Matrix;
     varying vec4 vColor;
     void main(){
-        gl_Position = uMat * a_Position;
+        // gl_Position = a_Position;
+        gl_Position = u_Matrix * a_Position;
         vColor = a_Color;
     }
 `
@@ -23,7 +25,7 @@ const f_shader = `
     precision mediump float;
     varying vec4 vColor;
     void main(){
-        gl_FlagColor = vColor;
+        gl_FragColor = vColor;
     }
 `
 const points = new Float32Array([
@@ -70,22 +72,35 @@ gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
 
 const program = initShaders(gl, v_shader, f_shader)
 
-// setAttributeFromBuffer(pointsVertex, 'a_Position',3)
-// setAttributeFromBuffer(colorVertex, 'a_Color',3)
+setAttributeFromBuffer(gl, 'a_Position',3)
+setAttributeFromBuffer(gl, 'a_Color',3)
+
+gl.enable(gl.DEPTH_TEST)
+gl.clearColor(0, 0, 0, 1)
 //
 //
-// gl.enable(gl.DEPTH_TEST)
-// gl.clearColor(0, 0, 0, 0)
-//
-//
-// export const draw = () => {
-//     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-//     // gl.uniformMatrix4fv()
-//     gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0)
-//     r += 0.01
-//     requestAnimationFrame(draw)
-// }
-// draw()
+
+
+
+
+
+
+export const draw = () => {
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+    const u_xformMatrix = gl.getUniformLocation(program, 'u_Matrix');
+    const xformMatrix = new Mat4()
+    xformMatrix.rotate(r, 0,1,0)
+    // xformMatrix.lookAt(1,0.5,1, 0,0,0,0,1,0)
+    gl.uniformMatrix4fv(u_xformMatrix, false, xformMatrix.elements);
+
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0)
+    r += 1
+    requestAnimationFrame(draw)
+
+    console.log('run this')
+}
+draw()
 //
 // const setAttributeFromBuffer = (program: any, name: any, size = 2, stride = 0, offset = 0) => {
 //     const attribute: GLint = gl.getAttribLocation(program, name)

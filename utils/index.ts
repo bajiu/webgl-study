@@ -53,7 +53,6 @@ export const getDoseData = async() => {
     //   value,
     // );
   });
-  console.log(vertexArr)
   // console.log(vertexArr);
   return vertexArr;
 
