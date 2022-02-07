@@ -1,8 +1,9 @@
 // 接口获取dose数据
 import axios from 'axios';
+import {DoseRender} from "../src/dose/DoseRender";
 
 export const getDoseData = async() => {
-  const { data } = await axios.get('http://localhost:8888/public/dose7.json');
+  const { data } = await axios.get('http://localhost:8989/public/dose7.json');
   const {
     doseData,
     corner,
@@ -36,7 +37,7 @@ export const getDoseData = async() => {
 
     // 体数据
     vertexArr.push(
-      ((index % xLen) - (xLen /2)),
+      ((index % xLen) - (xLen /2) - 0.5),
       // (~~(index / xLen) % (xLen * yLen)) * baseY,
       (~~((index % (xLen * yLen)) / xLen) - (yLen /2) ),
       (~~(index / (xLen * yLen)) - (zLen /2)) ,

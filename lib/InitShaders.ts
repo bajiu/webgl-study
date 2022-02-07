@@ -28,19 +28,19 @@ export const initShaders = (gl: any, vshader: string, fshader: string) => {
  * @param fshader 片元着色器
  * @returns {null|WebGLProgram}
  */
-const createProgram = (gl: WebGLRenderingContextBase, vshader: string, fshader: string) => {
+export const createProgram = (gl: WebGLRenderingContextBase, vshader: string, fshader: string): WebGLProgram => {
   // 创建着色器对象
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vshader)
   const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fshader)
 
   if (!vertexShader || !fragmentShader) {
-    return null
+    throw 'shader create fail'
   }
 
   // 创建程序对象
   const program = gl.createProgram()
   if (!program) {
-    return null
+    throw 'program create fail'
   }
 
   // 为程序对象分配顶点着色器和片元着色器
@@ -54,11 +54,11 @@ const createProgram = (gl: WebGLRenderingContextBase, vshader: string, fshader: 
   const linked = gl.getProgramParameter(program, gl.LINK_STATUS)
   if (!linked) {
     const error = gl.getProgramInfoLog(program)
-    console.log('无法连接程序对象: ' + error)
+    // console.log('无法连接程序对象: ' + error)
     gl.deleteProgram(program)
     gl.deleteShader(fragmentShader)
     gl.deleteShader(vertexShader)
-    return null
+    throw `无法连接程序对象: ${error}`
   }
   return program
 }

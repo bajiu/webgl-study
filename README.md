@@ -1,1 +1,1 @@
-# babylonjs-study
+# webgl-study
