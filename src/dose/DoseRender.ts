@@ -37,26 +37,6 @@ const f_shader = `
       }
   }
 `
-const v_shader_3 = `#version 300 es
-    in vec3 aPosition;  //顶点位置
-    in vec2 aTexCoor;    //顶点纹理坐标
-    out vec2 vTextureCoord;
-    uniform float a_Test;
-    in float a_Value;
-    void main(){    
-        if(a_Value > 0.0) {
-            // gl_Position = vec4(aPosition, 1); //根据总变换矩阵计算此次绘制此顶点位置
-            // gl_Position = vec4(aPosition, 150); //根据总变换矩阵计算此次绘制此顶点位置
-            if(aPosition.z == 0.0) {
-                 gl_Position = vec4(aPosition.x + a_Test, aPosition.y, aPosition.z, 150); 
-                 // gl_Position = vec4(aTexCoor.x + a_Test, aTexCoor.y, aPosition.z, 150); 
-                 vTextureCoord = aTexCoor;
-            }
-            gl_PointSize = 2.0;
-        }                       
-    }  
-`
-
 
 
 const fbo_v_shader = `
@@ -79,6 +59,38 @@ const fbo_v_shader = `
     }  
 `
 
+
+const v_shader_3 = `#version 300 es
+    in vec3 aPosition;  //顶点位置
+    in vec2 aTexCoor;    //顶点纹理坐标
+    out vec2 vTextureCoord;
+    uniform float a_Test;
+    out vec3 position;
+    in float a_Value;
+    void main(){    
+        if(a_Value > 0.0) {
+            // gl_Position = vec4(aPosition, 1); //根据总变换矩阵计算此次绘制此顶点位置
+            // gl_Position = vec4(aPosition, 150); //根据总变换矩阵计算此次绘制此顶点位置
+            if(aPosition.z == 0.0) {
+                 gl_Position = vec4(aPosition.x + a_Test, aPosition.y, aPosition.z, 150); 
+                 // gl_Position = vec4(aTexCoor.x + a_Test, aTexCoor.y, aPosition.z, 150); 
+                 vTextureCoord = aTexCoor;
+                 position = vec3(aPosition.x, aPosition.y, 0.0);
+            }
+            // gl_PointSize = 2.0;
+        } else {
+            if(aPosition.z == 0.0) {
+                 gl_Position = vec4(aPosition.x + a_Test, aPosition.y, aPosition.z, 150); 
+                 // gl_Position = vec4(aTexCoor.x + a_Test, aTexCoor.y, aPosition.z, 150); 
+                 // vTextureCoord = aTexCoor;
+                 position = vec3(-10000, -10000, 0.0);
+            }
+        }   
+        gl_PointSize = 2.0;                    
+    }  
+`
+
+
 const f_shader_3 = `#version 300 es
     // precision highp float;
     precision mediump float;
@@ -87,6 +99,7 @@ const f_shader_3 = `#version 300 es
     uniform bool isImg;
     in vec2 vTextureCoord;
     out vec4 outColor;
+    in vec3 position;
     float weight[9] = float[] (
             0.0947416, 0.118318, 0.0947416, 
             .118318, 0.147761, 0.118318, 
@@ -96,12 +109,48 @@ const f_shader_3 = `#version 300 es
         if(!isImg){
             outColor = vec4(1.0,1.0,0.0,1.0);
         }else{
-            vec2 onePixel = vec2(1.0, 1.0) / 512.0;
-            if(vTextureCoord.x >= 0.5) {
-                outColor = texture(sTexture, vTextureCoord).raba;
-            } else {
-                outColor = texture(sTexture, vTextureCoord).rbaa;
+            if(position.z == 0.0) {
+                vec2 onePixel = vec2(1.0, 1.0) / 512.0;
+                vec4 color;
+                
+                vec2 p1 = vec2((position.x) / 150.0, position.y / 150.0);
+                vec2 p2 = vec2((position.x - onePixel.x) / 150.0, position.y / 150.0);
+               
+                if(position.x == -10000.0 || position.y == -10000.0) {
+                    outColor = vec4(0.0,0.0,1.0,0.5);
+                } else {
+                    if(texture(sTexture, vec2((position.x - 1.0) - 0.2, position.y)).a == 1.0) {
+                        outColor = vec4(1.0,1.0,1.0, 0.5);
+                    } else {
+                        outColor = vec4(0.0,0.0,0.0, 0.5);
+                    }
+                
+                }
+                // outColor = texture(sTexture, vec2((position.x - 1000000.0) / 150.0, position.y));
+                 // if(position.x / 150.0 < -0.5) {
+                 //    outColor = texture(sTexture, p1).abaa;
+                 // }
+                // if(texture(sTexture, p1).r == texture(sTexture, p2).r) {
+                //     texture(sTexture, p1)
+                //     // outColor = texture(sTexture, p1).abba;
+                //     outColor = vec4(1.0,0.0,1.0,1.0);
+                // } else {
+                //     outColor = vec4(0.0 , 0.0, 1.0, 1.0);
+                // }
             }
+          
+            // if(p.x > 0.0) {
+            //     outColor = texture(sTexture, p).bbaa;
+            // }
+           
+            
+            
+            //
+            // if(vTextureCoord.x >= 0.5) {
+            //     outColor = texture(sTexture, vTextureCoord).raba;
+            // } else {
+            //     outColor = texture(sTexture, vTextureCoord).rbaa;
+            // }
             
             // outColor = vec4(0.0,1.0, 1.0, 1.0);
             
@@ -530,6 +579,9 @@ export class DoseRender {
 
         }
         drawFrame()
+        let pixels = new Uint8Array(512*512*4);
+        gl.readPixels(0, 0, 512, 512 , gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        console.log(pixels)
 
 
         function initFramebufferObject(gl: any) {
