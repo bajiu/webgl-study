@@ -37,6 +37,26 @@ const f_shader = `
       }
   }
 `
+const v_shader_3 = `#version 300 es
+    in vec3 aPosition;  //顶点位置
+    in vec2 aTexCoor;    //顶点纹理坐标
+    out vec2 vTextureCoord;
+    uniform float a_Test;
+    in float a_Value;
+    void main(){    
+        if(a_Value > 0.0) {
+            // gl_Position = vec4(aPosition, 1); //根据总变换矩阵计算此次绘制此顶点位置
+            // gl_Position = vec4(aPosition, 150); //根据总变换矩阵计算此次绘制此顶点位置
+            if(aPosition.z == 0.0) {
+                 gl_Position = vec4(aPosition.x + a_Test, aPosition.y, aPosition.z, 150); 
+                 // gl_Position = vec4(aTexCoor.x + a_Test, aTexCoor.y, aPosition.z, 150); 
+                 vTextureCoord = aTexCoor;
+            }
+            gl_PointSize = 2.0;
+        }                       
+    }  
+`
+
 
 
 const fbo_v_shader = `
@@ -51,14 +71,93 @@ const fbo_v_shader = `
             // gl_Position = vec4(aPosition, 1); //根据总变换矩阵计算此次绘制此顶点位置
             // gl_Position = vec4(aPosition, 150); //根据总变换矩阵计算此次绘制此顶点位置
             if(aPosition.z == 0.0) {
-                 gl_Position = vec4(aPosition.x + a_Test, aPosition.y, aPosition.z, 150); 
+                 gl_Position = vec4(aPosition.x + a_Test, aPosition.y, aPosition.z, 150);
+                 vTextureCoord = aTexCoor;
             }
             gl_PointSize = 2.0;
-            vTextureCoord = aTexCoor;
-           
         }                       
     }  
 `
+
+const f_shader_3 = `#version 300 es
+    // precision highp float;
+    precision mediump float;
+    // 纹理内容数据
+    uniform sampler2D sTexture;
+    uniform bool isImg;
+    in vec2 vTextureCoord;
+    out vec4 outColor;
+    float weight[9] = float[] (
+            0.0947416, 0.118318, 0.0947416, 
+            .118318, 0.147761, 0.118318, 
+            0.0947416, 0.118318, 0.0947416
+    );
+    void main(){
+        if(!isImg){
+            outColor = vec4(1.0,1.0,0.0,1.0);
+        }else{
+            vec2 onePixel = vec2(1.0, 1.0) / 512.0;
+            if(vTextureCoord.x >= 0.5) {
+                outColor = texture(sTexture, vTextureCoord).raba;
+            } else {
+                outColor = texture(sTexture, vTextureCoord).rbaa;
+            }
+            
+            // outColor = vec4(0.0,1.0, 1.0, 1.0);
+            
+            
+            
+            
+            // vec2 onePixel = vec2(1.0, 1.0) / 512.0;
+            // vec4 color;
+            // vTextureCoord
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            // outColor = texture(sTexture, vec2(1.0,1.0));
+            // texture(sTexture, vTextureCoord);
+            // 对左、中、右三个像素求平均值
+            // if(texture(sTexture, vTextureCoord + vec2(onePixel.x, 0.0)).y >= 0.0 && texture(sTexture, vTextureCoord).y == 0.0) {
+               //  outColor = (texture(sTexture, vTextureCoord) +
+               // texture(sTexture, vTextureCoord + vec2(onePixel.x, 0.0)) +
+               // texture(sTexture, vTextureCoord + vec2(-onePixel.x, 0.0))) / 3.0;
+            // }
+            
+            // if(vTextureCoord.x == 0.0) {
+            //
+            //     outColor = vec4(texture(sTexture, vTextureCoord).x, 0.5, texture(sTexture, vTextureCoord).x, 1.0);
+            // }
+
+            // outColor = vec4(sTexture.x, 0.0, 0.0, 1.0);
+            // if(texture(sTexture, vTextureCoord) == vec4(0.0,0.0,0.0,1.0)) {
+            //     outColor = vec4(texture(sTexture, vTextureCoord).x, 0.5, texture(sTexture, vTextureCoord).x, 1.0);
+            // }
+            
+            
+            
+            // outColor = vec4(0.0, 1.0, 0.0, 1.0);
+            // outColor = color;
+
+        
+            // float average = (1.0 + color.g + color.b) / 3.0;
+            // outColor = vec4(average, average, average, color.a);
+        
+        
+        
+            // vec4 color = texture(sTexture, vTextureCoord);
+            // outColor =  color.grba;
+            // outColor = texture2D(sTexture, vTextureCoord.xy);
+        }
+    }
+`
+
 
 const fbo_f_shader = `
     precision mediump float;
@@ -68,9 +167,9 @@ const fbo_f_shader = `
     varying vec2 vTextureCoord;
     void main(){
       if(!isImg){
-        // gl_FragColor = vec4(0.2,0.8,0.1,1.0);
+        gl_FragColor = vec4(0.2,0.8,0.1,1.0);
       }else{
-        gl_FragColor = texture2D(sTexture, vTextureCoord).bgra;
+        gl_FragColor = texture2D(sTexture, vTextureCoord).rgb;
       }
     }
 `
@@ -291,8 +390,8 @@ export class DoseRender {
         this.createGl()
         const {_gl: gl} = this
         const {v_shader, f_shader} = this._config
-
-        const program = initShaders(gl, fbo_v_shader, fbo_f_shader)
+        // const program = initShaders(gl, fbo_v_shader, fbo_f_shader)
+        const program = initShaders(gl, v_shader_3, f_shader_3)
         gl.enable(gl.DEPTH_TEST);
 
         let framebuffer: any = null
@@ -321,7 +420,12 @@ export class DoseRender {
 
 
         //接收顶点纹理坐标数据
-        const vertexTexCoor = [0.0, 1.0, 1.0, 1.0, 1.0, 0.0];
+        const vertexTexCoor = [
+            0.0, 1.0,
+            1.0, 1.0,
+            0.0, 0.0,
+            1.0, 0.0
+        ];
 
         //创建顶点纹理坐标缓冲
         const vertexTexCoorBuffer = gl.createBuffer();
@@ -363,6 +467,8 @@ export class DoseRender {
             //将顶点纹理坐标数据送入渲染管线
             gl.bindBuffer(gl.ARRAY_BUFFER, vertexTexCoorBuffer);
             gl.vertexAttribPointer(gl.getAttribLocation(program, "aTexCoor"), 2, gl.FLOAT, false, 0, 0);			//一定要每次都取消绑定，在这里卡了很久
+
+
             var isImg = gl.getUniformLocation(program, 'isImg');
             var a_Test = gl.getUniformLocation(program, 'a_Test');
             var v_Test = gl.getUniformLocation(program, 'v_Test');
@@ -370,11 +476,11 @@ export class DoseRender {
                 // gl.activeTexture(gl.TEXTURE0);
                 // @ts-ignore
                 gl.uniform1i(isImg, true);
-                gl.uniform1f(a_Test, 100);
+                gl.uniform1f(a_Test, 0);
             }else{
                 // @ts-ignore
                 gl.uniform1i(isImg, false);
-                gl.uniform1f(a_Test, 30);
+                gl.uniform1f(a_Test, 0);
 
 
             }
@@ -388,7 +494,7 @@ export class DoseRender {
             //一定要每次都取消绑定，在这里卡了很久
 
             // gl.drawArrays(gl.TRIANGLES, 0, vcount);		//用顶点法绘制物体
-            gl.drawArrays(gl.POINTS, 0, vertexData.length/ 4);		//用顶点法绘制物体
+            gl.drawArrays(gl.POINTS, 0, vertexData.length/4);		//用顶点法绘制物体
 
             //
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -404,11 +510,11 @@ export class DoseRender {
 
 
 
-            gl.clearColor(0, 0.2, 0.4, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            gl.viewport(0, 0, 512, 512);
+            // gl.clearColor(0, 0.2, 0.4, 1.0);
+            // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            // gl.viewport(0, 0, 512, 512);
             //
-            drawSelf(null, false);
+            // drawSelf(null, false);
 
             // // 在canvas上绘制矩形，纹理使用上一步在纹理对象中绘制的图像
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);// 接触绑定之后，会在默认的颜色缓冲区中绘制
@@ -416,7 +522,7 @@ export class DoseRender {
             gl.viewport(0, 0, 512, 512);
             // gl.viewport(0, 0, 512, 512);
             // //背景颜色_黑色
-            // gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            // gl.clearColor(1.0, 0.0, 0.0, 1.0);
             //
             // //清除着色缓冲与深度缓冲
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

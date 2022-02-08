@@ -3,7 +3,7 @@ import axios from 'axios';
 import {DoseRender} from "../src/dose/DoseRender";
 
 export const getDoseData = async() => {
-  const { data } = await axios.get('http://localhost:8989/public/dose7.json');
+  const { data } = await axios.get('http://localhost:8006/public/dose7.json');
   const {
     doseData,
     corner,
