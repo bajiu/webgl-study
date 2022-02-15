@@ -3,6 +3,8 @@ import {initShaders} from "../../lib/InitShaders";
 import {getDoseData} from "../../utils";
 import {Mat4} from "cuon-matrix";
 import {DoseRender} from "./DoseRender";
+import {DoseRender1} from "./DoseRender1";
+// import {DoseRender} from "./DoseRender";
 
 const v_shader = `
   attribute vec4 a_Position;
@@ -30,7 +32,6 @@ const f_shader = `
   }
 `;
 // 全局数据
-
 
 
 // const render = async () => {
@@ -76,10 +77,50 @@ getDoseData().then(vertexBuffer => {
     const config = {
         el: document.getElementById('app'),
         vertexData: new Float32Array(vertexBuffer),
-        colorTable: [],
+        colorTable: [
+            // {
+            //     percent: 110,
+            //     color: [0, 255, 255, 255]
+            // },
+            // {
+            //     percent: 100,
+            //     color: [255, 0, 255, 255]
+            // },
+            // {
+            //     percent: 50,
+            //     color: [0, 0, 1, 1]
+            // },
+            // {
+            //     percent: 0,
+            //     color: [1, 0, 1, 1]
+            // }
+
+            {
+                percent: 0.0001,
+                color: [0, 0, 255, 255]
+            },
+            {
+                percent: 0.01,
+                color: [0, 255, 0, 255]
+            },
+            {
+                percent: 5,
+                color: [255, 0, 0, 255]
+            },
+            // {
+            //     percent: 30,
+            //     color: [255, 0, 255, 255]
+            // },
+            // {
+            //     percent: 50,
+            //     color: [0, 0, 255, 255]
+            // },
+        ],
         doseInfo: {
-            nrVoxels: [183 , 198 , 150]
-        }
+            nrVoxels: [183, 198, 150]
+        },
+        prescriptionValue: 6600,
+
     }
 
     // todo 这里是画正常体素的 dose
@@ -107,9 +148,41 @@ getDoseData().then(vertexBuffer => {
     // }
 
 
-    const dose = new DoseRender(config)
-    dose.drawTexture()
+    const dose1 = new DoseRender1(config)
+    dose1.drawTexture()
 
+
+    const dose = new DoseRender(config)
+
+    let page = 1
+    let angle = 0
+    let face: any = 'transversal'
+    dose.initFboProgram()
+
+
+    dose.loadFbo()
+    document.onkeydown = (e: KeyboardEvent) => {
+        switch (e.key) {
+            case 'w':
+                page += 1;
+                break;
+            case 's':
+                page -= 1;
+                break;
+            case 'd':
+                face = 'coronal';
+                break;
+            case 'a':
+                face = 'sagittal';
+                break;
+        }
+        page = +page.toFixed(2)
+        // console.log(page)
+        dose.face = face
+        // dose.setFace(face)
+        dose.page = page
+
+    }
 
 
 })

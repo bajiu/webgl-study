@@ -17,6 +17,7 @@ export const initSizeBuffer = (gl: WebGLRenderingContext, sizes: number) => {
 
 export const setAttributeFromBuffer = (gl: any, name: any, size = 2, stride = 0, offset = 0) => {
     const attribute: GLint = gl.getAttribLocation(gl.program, name)
+    console.log('-----------------', attribute)
     gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, stride, offset)
     gl.enableVertexAttribArray(attribute)
 }

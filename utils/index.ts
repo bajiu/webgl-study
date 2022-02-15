@@ -1,6 +1,6 @@
 // 接口获取dose数据
 import axios from 'axios';
-import {DoseRender} from "../src/dose/DoseRender";
+import {DoseRender} from "../src/dose/DoseRender1";
 
 export const getDoseData = async() => {
   const { data } = await axios.get('http://localhost:8006/public/dose7.json');
