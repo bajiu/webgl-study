@@ -147,9 +147,9 @@ getDoseData().then(vertexBuffer => {
     //
     // }
 
-
-    const dose1 = new DoseRender1(config)
-    dose1.drawTexture()
+    //
+    // const dose1 = new DoseRender1(config)
+    // dose1.drawTexture()
 
 
     const dose = new DoseRender(config)

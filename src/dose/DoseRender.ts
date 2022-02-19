@@ -11,7 +11,7 @@ const v_fbo = `#version 300 es
     uniform float a_Page;
     uniform float a_Face;
     
-    
+    out float u_Value;
     
     uniform float a_Max;
     uniform float a_Min;
@@ -39,6 +39,7 @@ const v_fbo = `#version 300 es
             } 
             gl_PointSize = 3.5;
         }
+        u_Value = a_Value;
     }
 `
 //
@@ -49,6 +50,8 @@ const f_fbo = `#version 300 es
     // 是否为等计量线
     // uniform bool isLine;
     uniform vec4 u_Color;
+    
+    in float u_Value;
     void main(){
         // outColor = vec4(1.0,0.0,0.0,1.0);
         outColor = u_Color / 255.0;
@@ -128,12 +131,12 @@ const f_draw = `#version 300 es
                 // 上下左右的坐标
                 pixel = array[i] / 512.0; 
                 if(j == 0) {
-                     if(texture(u_Sampler, v_Texture + pixel) == bgColor && color != bgColor) {
+                     // if(texture(u_Sampler, v_Texture + pixel) == bgColor && color != bgColor) {
+                     //    diff_Color = currentColor;
+                     // }
+                      if(texture(u_Sampler, v_Texture + pixel) != currentColor && color == currentColor) {
                         diff_Color = currentColor;
-                     }
-                    //   if(texture(u_Sampler, v_Texture + pixel) != currentColor && color == currentColor) {
-                    //     diff_Color = currentColor;
-                    // }
+                    }
                 }
                 // if( j == 1) {
                 //     if(texture(u_Sampler, v_Texture + pixel) != currentColor && color == currentColor) {
@@ -383,16 +386,24 @@ export class DoseRender {
         let lastValue = 0.0;
         // todo interface
         this._config.colorTable.forEach((item,index:number) => {
+            // if(index ==1) return
+            // if(index === 0) {
+                const nowValue = item.percent * prescriptionValue / 100;
+                this.drawFbo(item.color, nowValue, lastValue)
+                lastValue = nowValue
+                // if(index == 0) {
+                    let pixels = new Uint8Array(512 * 512 * 4)
+                    gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+                    this._pixels = pixels
+                    this.loadTexture()
+                // }
 
-            const nowValue = item.percent * prescriptionValue / 100;
-            this.drawFbo(item.color, nowValue, lastValue)
-            lastValue = nowValue
+            // }
+
         })
 
-        let pixels = new Uint8Array(512 * 512 * 4)
-        gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-        this._pixels = pixels
-        this.loadTexture()
+        console.log('lineBuffers:',this.lineBuffers)
+        this.drawAllLine()
 
     }
 
@@ -460,19 +471,16 @@ export class DoseRender {
 
         const colorTable = [
             0/255, 0/255, 255/255, 255/255,
-            0/255, 255/255, 0/255, 255/255,
-            255/255, 0/255, 0/255, 255/255,
-
-
-
+            // 0/255, 255/255, 0/255, 255/255,
+            // 255/255, 0/255, 0/255, 255/255,
         ]
 
-        console.log('----', this._config.colorTable)
+        // console.log('----', this._config.colorTable)
         const colorArr = [];
         for (const color of this._config.colorTable) {
             colorArr.push(...color.color)
         }
-        console.log(colorArr)
+        // console.log(colorArr)
 
         const u_ColorTable = gl.getUniformLocation(program, "u_ColorTable")
         gl.uniform4fv(u_ColorTable, colorTable)
@@ -481,12 +489,47 @@ export class DoseRender {
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         let pixel = new Uint8Array(4)
         gl.readPixels(200, 256, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
-        console.log('pixel',pixel)
+        // console.log('pixel',pixel)
+        let pixels = new Uint8Array(512 * 512 * 4)
+        gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        this.lineBuffers.push(pixels)
 
 
     }
+    private lineBuffers:any = []
+
+    private drawAllLine() {
+        const lineCanvas = document.createElement('canvas')
+
+        lineCanvas.width = 512
+        lineCanvas.height = 512
+        lineCanvas.style.width = `512px`
+        lineCanvas.style.height = `512px`
+        // lineCanvas.style.background = `orange`
+
+        this._el.append(lineCanvas)
+
+        const ctx: CanvasRenderingContext2D = lineCanvas.getContext('2d') as CanvasRenderingContext2D;
+        ctx.fillStyle = `rgba(255, 255, 255, 0)`
+        // console.log()
+        const imageBuffer = Uint8ClampedArray.from(this.lineBuffers[0])
+
+        const imageData = new ImageData(imageBuffer,512, 512);
+        console.log(imageData)
+        console.time()
+        for (const i in imageBuffer) {
+            if(imageBuffer[i] == 0 && this.lineBuffers[1][i] != 0) {
+                if(imageBuffer[i] != this.lineBuffers[1][i]) {
+                    imageBuffer[i] = this.lineBuffers[1][i];
+                }
+            }
+
+        }
+        console.timeEnd()
+        ctx.putImageData(imageData, 0, 0);
 
 
+    }
 
 
     private createTexture(): WebGLTexture | null {
