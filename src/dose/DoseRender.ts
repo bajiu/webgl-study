@@ -70,115 +70,40 @@ const v_draw = `#version 300 es
 const f_draw = `#version 300 es
     // 纹理内容数据
     precision mediump float;
-
     uniform sampler2D u_Sampler;
     in vec2 v_Texture;
     out vec4 outColor;
-    uniform vec4 u_Diff_color;
-    
-    uniform float u_value[10];
-    vec4 debug_color = vec4(1.0, 0.0, 1.0, 1.0);
-    
-    
-    // 颜色配置最大长度
-    const int colorTableLen = 10;
-    uniform vec4 u_ColorTable[colorTableLen];
-    
-    
-    
+    uniform vec4 u_ColorTable;
     const int len = 4; 
-    // vec2 array[9] = vec2[9](
-    //     vec2(-1,-1), vec2(0,-1), vec2( 1, 1), 
-    //     vec2(-1, 0), vec2(0, 0), vec2( 1, 0),
-    //     vec2(-1, 1), vec2(0, 1), vec2( 1, 1)
+    // vec2 array[8] = vec2[8](
+    //     vec2(-1,-1), vec2(0,-1), vec2( 1, -1), 
+    //     vec2(-1, 0), vec2( 1,  0),
+    //     vec2(-1, 1), vec2(0, 1), vec2( 1,  1)
     // );
-    vec2 array[4] = vec2[4](vec2(-1, 0),vec2(0,-1), vec2(1, 0),vec2(0, 1));
-    
-    
+    vec2 array[4] = vec2[4](vec2(1,0), vec2(-1, 0),vec2(0, 1),vec2(0, -1));
     void main() {
-        vec2 pixel;
-        bool isBoundary = false;
-        vec4 color;
         vec4 diff_Color;
-        
-        vec4 currentColor; 
-        // 默认背景色白色
-        vec4 bgColor = vec4(0.0, 0.0, 0.0, 0.0);
-        
-        color = texture(u_Sampler, v_Texture);
-        vec2 pixelLeft = array[0] / 512.0;
-        vec2 pixelBottom = array[1] / 512.0;
-        vec2 pixelTop = array[2] / 512.0;
-        vec2 pixelRight = array[3] / 512.0;
-        
-        for(int j = 0; j < colorTableLen; j++) {
-            // if(color == u_ColorTable[j] && j == 0) {
-            //    for(int i = 0; i < len; i++) {  
-            //         pixel = array[i] / 512.0; 
-            //         if(texture(u_Sampler, v_Texture + pixel) != u_ColorTable[j]) {
-            //            diff_Color = u_ColorTable[j+1];
-            //            // continue;
-            //         }
-            //     }
-            // }
-
-            if(color == u_ColorTable[j] && j == 2) {
-               for(int i = 0; i < len; i++) {  
-                    pixel = array[i] / 512.0; 
-                    if(texture(u_Sampler, v_Texture + pixel) != u_ColorTable[j]) {
-                       diff_Color = color;
-                       // continue;
-                    }
-                }
+        vec4 color = texture(u_Sampler, v_Texture);
+        vec4 up = texture(u_Sampler, v_Texture + (vec2(0, 1) / 512.0));
+        vec4 down = texture(u_Sampler, v_Texture + (vec2(0, -1) / 512.0));
+        vec4 left = texture(u_Sampler, v_Texture + (vec2(-1, 0) / 512.0));
+        vec4 right = texture(u_Sampler, v_Texture + (vec2(1, 0) / 512.0));
+        for(int i = 0; i<len; i++) {
+            vec2 pixel = array[i] / 512.0;
+            if(u_ColorTable == color && color != texture(u_Sampler, v_Texture + pixel)) {
+                diff_Color = color;
+                break;
+            }else {
+                diff_Color = vec4(0.0,0.0,0.0,0.0);
             }
+
         }
+        // if(u_ColorTable == color && up * down * left * right != u_ColorTable) {
+        //     diff_Color = color;
+        // } else {
+        //     diff_Color = vec4(0.0,0.0,0.0,0.0);
+        // }
         outColor = diff_Color;
-        // diff_Color = color;
-        
-        
-        
-        
-        
-        // for(int j = 0; j < colorTableLen; j++) {
-        //     currentColor = u_ColorTable[j];
-        // //    
-        //     for(int i = 0; i < len; i++) {  
-        //         // 上下左右的坐标
-        //         pixel = array[i] / 512.0; 
-        //         if(j == 1) {
-        //    
-        //             if(texture(u_Sampler, v_Texture + pixel) != u_ColorTable[j -1] && color == u_ColorTable[j - 1]) {
-        //                diff_Color = currentColor;
-        //                continue;
-        //             }  
-        //        
-        //             
-        //         }
-        //         // if(j == 2) {
-        //         //     // if(color != u_ColorTable[j]) {
-        //         //         if(texture(u_Sampler, v_Texture + pixel) != u_ColorTable[j -1] && color == u_ColorTable[j - 1]) {
-        //         //            diff_Color = currentColor;
-        //         //            continue;
-        //         //         }  
-        //         //     // }
-        //         //    
-        //         // }
-        //     }
-        // //
-        // }
-        
-        
-        
-        // outColor = color;
-        
-        
-        // if(isBoundary) {
-        //     // outColor = u_Diff_color;
-        //     // outColor = vec4(0.0, 0.0, 1.0, 1.0);
-        //      outColor = diff_Color
-        // }else {
-        //     outColor = vec4(0.0, 0.0, 0.0, 0.0);
-        // }
     }
 `
 
@@ -296,7 +221,7 @@ export class DoseRender {
         const a_Value = gl.getAttribLocation(program, 'a_Value')
         gl.vertexAttribPointer(a_Value, 1, gl.FLOAT, false, FSIZE * 4, FSIZE * 3)
         gl.enableVertexAttribArray(a_Value)
-
+        this.initMergeLineCanvas()
     }
 
 
@@ -358,46 +283,50 @@ export class DoseRender {
         // gl.drawArrays(gl.POINTS, 0, this._vertexData.length / 4)
 
         const {prescriptionValue, colorTable} = this._config
-        let lastValue = 0.0;
         // todo interface
         colorTable.forEach((item,index:number) => {
-            if(index <= 3) {
+            // if(index == 2) {
                 const nowValue = item.percent * prescriptionValue / 100;
-                this.drawFbo(item.color, nowValue, lastValue)
-                lastValue = nowValue
-                // this.loadTexture()
-            }
+                this.drawFbo(item.color, nowValue)
+                let pixels = new Uint8Array(512 * 512 * 4)
+                gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+                this._pixels = pixels
+                this.loadTexture(pixels, item.color)
+            // }
         })
-        //
-        let pixels = new Uint8Array(512 * 512 * 4)
-        gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-        this._pixels = pixels
-        this.loadTexture()
+        // this.lineCtx.globalCompositeOperation = 'source';
+        this.lineCtx.beginPath()
+        this.lineCtx.fillStyle = '#ff6';
+        // this.lineCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+
+        this.mergeLine()
+        this._linePixels = []
+        this._lineImages = []
+        // this.mergeLine()
+        // this._linePixels = []
+
 
     }
 
     // todo interface
-    private drawFbo(colors: any, nowValue: number, lastValue: number) {
-        const {_fboGl: gl, _fboProgram: program, face, _page: page, _matrix: matrix, vertexData} = this
-        // console.log(colors, nowValue, lastValue)
-        // gl.uniform1f(a_Min, 0.01)
-        // gl.uniform1f(a_Max, 500.0)
+    private drawFbo(colors: any, nowValue: number) {
+        const {_fboGl: gl, _fboProgram: program} = this
         gl.uniform1f(gl.getUniformLocation(program as WebGLProgram, 'a_Min'), nowValue)
-        // gl.uniform1f(gl.getUniformLocation(program as WebGLProgram, 'a_Max'), nowValue)
         gl.uniform4fv(gl.getUniformLocation(program, "u_Color"), colors)
-
+        // gl.clearColor(0.0, 0.0, 0.0, 0.0);
+        // gl.clear(gl.COLOR_BUFFER_BIT)
         gl.drawArrays(gl.POINTS, 0, this._vertexData.length / 4)
     }
 
     private _pixels: Uint8Array = new Uint8Array()
 
     // todo 加载相关纹理
-    loadTexture() {
+    loadTexture(pixels: Uint8Array,lineColor: number[]) {
         const {_drawGl: gl} = this
         const program = this._drawProgram
         const texture = this.createTexture()
         gl.useProgram(program)
-
         const verticesTexture = new Float32Array([
             // 顶点坐标, 纹理坐标
             -1.0, 1.0, 0.0, 1.0,
@@ -412,8 +341,6 @@ export class DoseRender {
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
         //将顶点坐标数据送入缓冲
         gl.bufferData(gl.ARRAY_BUFFER, verticesTexture, gl.STATIC_DRAW)
-
-
         const a_Position = gl.getAttribLocation(program, 'a_Position');
         gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, FSIZE * 4, 0);
         gl.enableVertexAttribArray(a_Position);
@@ -424,54 +351,51 @@ export class DoseRender {
         const a_Texture = gl.getAttribLocation(program, 'a_Texture');
         gl.vertexAttribPointer(a_Texture, 2, gl.FLOAT, false, FSIZE * 4, FSIZE * 2);
         gl.enableVertexAttribArray(a_Texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, this._pixels);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
-        // const u_Diff_color = gl.getUniformLocation(program, "u_Diff_color")
 
-        // todo 模拟数据
-        // gl.uniform4fv(u_Diff_color, [0.0, 0.0, 1.0, 1.0])
+        const colorArr: Float32Array = Float32Array.from(lineColor,i => i/255)
 
-        // const arr = new Float32Array(10)
-        // const colorTable = [
-        //     0.0, 0.0, 255.0, 255.0,
-        //     255.0, 0.0, 255.0, 255.0
-        // ]
-        //
-        // const colorTable = [
-        //     0/255, 0/255, 255/255, 255/255,
-        //     0/255, 255/255, 0/255, 255/255,
-        //     255/255, 0/255, 0/255, 255/255,
-        //
-        //
-        //
-        // ]
-        //
-        // console.log('----', this._config.colorTable)
-        let colorArr = [];
-        const valueArr = [];
-        const {prescriptionValue, colorTable} = this._config
-        for (const color of colorTable) {
-            colorArr.push(...color.color)
-            valueArr.push(color.percent * prescriptionValue / 100)
-
-            console.log(color)
-        }
-        console.log(valueArr)
-
-        console.log(colorArr)
-        colorArr = colorArr.map(i => i/255)
-
-        //
         const u_ColorTable = gl.getUniformLocation(program, "u_ColorTable")
         gl.uniform4fv(u_ColorTable, colorArr)
-        //
-        //
+
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        // let pixel = new Uint8Array(4)
-        // gl.readPixels(200, 256, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
-        // console.log('pixel',pixel)
+        let linePixel = new Uint8Array(512 * 512 * 4)
+        gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, linePixel);
+        this._linePixels.push(linePixel)
+        this._lineImages.push(this._canvas.toDataURL('image/png'))
 
 
+    }
+    private _lineImages: any[] = []
+
+    private _linePixels: Uint8Array[] = [];
+    private _lineCanvas = document.createElement('canvas')
+
+
+    private lineCtx: any
+
+    initMergeLineCanvas() {
+        const canvas = document.createElement('canvas')
+        this.lineCtx = canvas.getContext('2d') as CanvasRenderingContext2D
+        // this.lineCtx.globalCompositeOperation = 'source-in'
+        canvas.style.width = `${512}px`
+        canvas.style.height = `${512}px`
+        canvas.width = 512
+        canvas.height = 512
+        this._el.append(canvas)
+    }
+    private mergeLine() {
+        this.lineCtx.clearRect(0, 0, 512, 512);
+        for (const imgData of this._lineImages) {
+            const img = new Image();
+            img.src = imgData
+
+            img.onload = () => {
+                console.log('run this')
+                this.lineCtx.drawImage(img,0,0)
+            }
+        }
     }
 
 

@@ -96,7 +96,7 @@ getDoseData().then(vertexBuffer => {
             // }
 
             {
-                percent: 0,
+                percent: 0.001,
                 color: [0, 0, 255, 255]
             },
             {
@@ -182,7 +182,7 @@ getDoseData().then(vertexBuffer => {
         }
         page = +page.toFixed(2)
         // console.log(page)
-        dose.face = face
+        // dose.face = face
         // dose.setFace(face)
         dose.page = page
 
