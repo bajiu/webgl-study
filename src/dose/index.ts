@@ -96,16 +96,12 @@ getDoseData().then(vertexBuffer => {
             // }
 
             {
-                percent: 0,
+                percent: 0.0001,
                 color: [0, 0, 255, 255]
             },
             {
                 percent: 0.01,
                 color: [0, 255, 0, 255]
-            },
-            {
-                percent: 0.1,
-                color: [0, 0, 0, 255]
             },
             {
                 percent: 5,
@@ -152,8 +148,8 @@ getDoseData().then(vertexBuffer => {
     // }
 
 
-    // const dose1 = new DoseRender1(config)
-    // dose1.drawTexture()
+    const dose1 = new DoseRender1(config)
+    dose1.drawTexture()
 
 
     const dose = new DoseRender(config)
