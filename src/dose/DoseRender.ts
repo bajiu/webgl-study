@@ -107,93 +107,25 @@ const f_draw = `#version 300 es
         vec4 bgColor = vec4(0.0, 0.0, 0.0, 0.0);
         
         color = texture(u_Sampler, v_Texture);
-        // currentColor = u_ColorTable[0];
-        // if(color == currentColor) {
-        //     diff_Color = color;
-        // } else {
-        //     diff_Color = vec4(0.0,0.0,0.0,0.0);
-        // }
-        // for(int i = 0; i < len; i++) {
-        //     pixel = array[i] / 512.0;
-        //     if(texture(u_Sampler, v_Texture + pixel) != currentColor && currentColor == color) {
-        //         diff_Color = currentColor;
-        //     }
-        // }
-        // diff_Color = texture(u_Sampler, v_Texture);
-        // diff_Color = currentColor;
-        
         color = texture(u_Sampler, v_Texture);  
         
         for(int j = 0; j < colorTableLen; j++) {
             currentColor = u_ColorTable[j];
-            
             for(int i = 0; i < len; i++) {  
                 // 上下左右的坐标
                 pixel = array[i] / 512.0; 
-                if(j == 0) {
-                     // if(texture(u_Sampler, v_Texture + pixel) == bgColor && color != bgColor) {
-                     //    diff_Color = currentColor;
-                     // }
-                      if(texture(u_Sampler, v_Texture + pixel) != currentColor && color == currentColor) {
+                if(texture(u_Sampler, v_Texture + pixel) != currentColor && color == currentColor) {
+                    if(texture(u_Sampler, v_Texture + pixel) == u_ColorTable[0]) {
+                        diff_Color = vec4(0.0,0.0,0.0,0.0);
+                        break;
+                    }else {
                         diff_Color = currentColor;
                     }
+                    
                 }
-                // if( j == 1) {
-                //     if(texture(u_Sampler, v_Texture + pixel) != currentColor && color == currentColor) {
-                //         diff_Color = currentColor;
-                //     }
-                // }
-                // if( j == 2) {
-                //
-                //     if(texture(u_Sampler, v_Texture + pixel) != currentColor && color == currentColor) {
-                //         diff_Color = currentColor;
-                //     }
-                //
-                // }
-                // if(j == 1) {
-                //     if(color != u_ColorTable[j] && texture(u_Sampler, v_Texture + pixel) == u_ColorTable[j]) {
-                //         diff_Color = u_ColorTable[j];
-                //     }
-                //     // if( texture(u_Sampler, v_Texture + pixel) != u_ColorTable[j-1] && texture(u_Sampler, v_Texture + pixel) != currentColor && u_ColorTable[j-1] != color ) {
-                //     //     diff_Color = currentColor;
-                //     // }
-                // }
-                // if(texture(u_Sampler, v_Texture + pixel) != currentColor && currentColor == color) {
-                //     diff_Color = currentColor;
-                // }
             }
-        
-        
         }
         
-        
-        // for(int j = 0; j < colorTableLen; j++) {
-        //     // todo 改为卷积, 这里二重循环有毒
-        //     for(int i = 0; i < len; i++) {
-        //         currentColor = u_ColorTable[j];
-        //         // currentColor = vec4(0, 215, 255, 255) / 255.0;
-        //         color = texture(u_Sampler, v_Texture);  
-        //         pixel = array[i] / 512.0;
-        //         if(texture(u_Sampler, v_Texture + pixel) != currentColor && currentColor == color) {
-        //             diff_Color = currentColor;
-        //         }
-        //
-        //         if(j == 0) {
-        //              // if(texture(u_Sampler, v_Texture + pixel) == bgColor && color != bgColor) {
-        //              //    diff_Color = currentColor;
-        //              // }
-        //         } else if(j == 1) {
-        //             // diff_Color = currentColor;
-        //             // if(currentColor != vec4(0.0,0.0,0.0,0.0)) {
-        //             //     if(texture(u_Sampler, v_Texture + pixel) == currentColor && color != currentColor) {
-        //             //         diff_Color = currentColor;
-        //             //     }
-        //             // }
-        //
-        //         }
-        //     }
-        //
-        // }
         outColor = diff_Color;
         
         
@@ -392,18 +324,18 @@ export class DoseRender {
                 this.drawFbo(item.color, nowValue, lastValue)
                 lastValue = nowValue
                 // if(index == 0) {
-                    let pixels = new Uint8Array(512 * 512 * 4)
-                    gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-                    this._pixels = pixels
-                    this.loadTexture()
+
                 // }
 
             // }
 
         })
-
-        console.log('lineBuffers:',this.lineBuffers)
-        this.drawAllLine()
+        let pixels = new Uint8Array(512 * 512 * 4)
+        gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        this._pixels = pixels
+        this.loadTexture()
+        // console.log('lineBuffers:',this.lineBuffers)
+        // this.drawAllLine()
 
     }
 
@@ -471,8 +403,8 @@ export class DoseRender {
 
         const colorTable = [
             0/255, 0/255, 255/255, 255/255,
-            // 0/255, 255/255, 0/255, 255/255,
-            // 255/255, 0/255, 0/255, 255/255,
+            0/255, 255/255, 0/255, 255/255,
+            255/255, 0/255, 0/255, 255/255,
         ]
 
         // console.log('----', this._config.colorTable)
@@ -480,19 +412,20 @@ export class DoseRender {
         for (const color of this._config.colorTable) {
             colorArr.push(...color.color)
         }
-        // console.log(colorArr)
+        console.log(colorArr)
+        const d = Float32Array.from(colorArr, i=> i/255)
 
         const u_ColorTable = gl.getUniformLocation(program, "u_ColorTable")
-        gl.uniform4fv(u_ColorTable, colorTable)
+        gl.uniform4fv(u_ColorTable, d)
 
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        let pixel = new Uint8Array(4)
-        gl.readPixels(200, 256, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
-        // console.log('pixel',pixel)
-        let pixels = new Uint8Array(512 * 512 * 4)
-        gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-        this.lineBuffers.push(pixels)
+        // let pixel = new Uint8Array(4)
+        // gl.readPixels(200, 256, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+        // // console.log('pixel',pixel)
+        // let pixels = new Uint8Array(512 * 512 * 4)
+        // gl.readPixels(0, 0, 512, 512, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        // this.lineBuffers.push(pixels)
 
 
     }

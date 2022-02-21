@@ -101,7 +101,7 @@ getDoseData().then(vertexBuffer => {
             },
             {
                 percent: 0.01,
-                color: [0, 255, 0, 255]
+                color: [0, 0, 0, 255]
             },
             {
                 percent: 5,
