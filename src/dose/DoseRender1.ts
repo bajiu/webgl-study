@@ -561,22 +561,22 @@ export class DoseRender1 {
             drawSelf(null, true);
 
         }
-        drawFrame()
-        setTimeout(() => {
-
-            let pixels = new Uint8Array(512 * 512 * 4);
-            gl.readPixels(0, 0, 256, 256 , gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-            let pixelsTemp = new Uint8Array(4);
-            gl.readPixels(256, 256, 1, 1 , gl.RGBA, gl.UNSIGNED_BYTE, pixelsTemp);
-            console.log(pixels, pixelsTemp)
-            const index = [...pixels].findIndex((i: any) => {
-                return i != 0
-            })
-            const n = 195458
-            // const n = 512 * 512 * 4 / 2
-            console.log(index, [...pixels][n- 2], [...pixels][n- 1],[...pixels][n], [...pixels][n + 1], [...pixels][n +2], [...pixels][n + 3])
-
-        }, 100)
+        // drawFrame()
+        // setTimeout(() => {
+        //
+        //     let pixels = new Uint8Array(512 * 512 * 4);
+        //     gl.readPixels(0, 0, 256, 256 , gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        //     let pixelsTemp = new Uint8Array(4);
+        //     gl.readPixels(256, 256, 1, 1 , gl.RGBA, gl.UNSIGNED_BYTE, pixelsTemp);
+        //     console.log(pixels, pixelsTemp)
+        //     const index = [...pixels].findIndex((i: any) => {
+        //         return i != 0
+        //     })
+        //     const n = 195458
+        //     // const n = 512 * 512 * 4 / 2
+        //     console.log(index, [...pixels][n- 2], [...pixels][n- 1],[...pixels][n], [...pixels][n + 1], [...pixels][n +2], [...pixels][n + 3])
+        //
+        // }, 100)
 
 
 
